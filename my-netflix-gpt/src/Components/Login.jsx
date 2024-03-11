@@ -1,13 +1,18 @@
 import Headers from "./Headers";
-import { LOGO } from "../Utils/constant.js";
+import { LOGO, USER_AVATAR } from "../Utils/constant.js";
 import { BACKGROUND_IMG } from "../Utils/constant.js";
 import { useRef, useState } from "react";
 import { checkValidData } from "../Utils/validate.js";
 import {auth} from "../Utils/firebase.js"
-import { createUserWithEmailAndPassword,signInWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword,signInWithEmailAndPassword, updateProfile} from "firebase/auth";
+import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { addUser } from "../Utils/Redux-tool-kit/userSlice.js";
 export function Login() {
   const [togglebtn,setTogglebtn]=useState(true);
   const [errorMsg,setErrorMsg]=useState(null);
+  const navigate=useNavigate()
+  const dispatch=useDispatch();
   const handleSignIn=()=>{
     return setTogglebtn(!togglebtn)
   }
@@ -23,14 +28,26 @@ export function Login() {
   .then((userCredential) => {
     // Signed up 
     const user = userCredential.user;
-    console.log(user)
-    // ...
+    updateProfile(user,{
+      displayName:name.current.value,
+      photoURL:USER_AVATAR,
+    }).then(()=>{
+      const { uid, email, displayName, photoURL } = auth.currentUser;
+      dispatch(addUser({
+          uid: uid,
+          email: email,
+          displayName: displayName,
+          photoURL: photoURL,
+      }))
+     
+    })
+
   })
   .catch((error) => {
     const errorCode = error.code;
     const errorMessage = error.message;
     console.log(errorCode,errorMessage)
-    // ..
+    setErrorMsg(errorMessage+"-"+errorCode)
   });
 
   }
@@ -38,10 +55,10 @@ export function Login() {
 
 signInWithEmailAndPassword(auth, email.current.value,password.current.value)
   .then((userCredential) => {
-    // Signed in 
+  
     const user = userCredential.user;
-    console.log(user)
-    // ...
+
+   
   })
   .catch((error) => {
     const errorCode = error.code;
